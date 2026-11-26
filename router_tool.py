@@ -1514,6 +1514,7 @@ footer .fver{font-family:var(--mono);font-size:11px;color:#41536f}
 .logindone .okp{color:var(--ok);font-weight:700;display:inline-flex;gap:7px;align-items:center}
 .umin{font-family:var(--mono);direction:ltr;unicode-bidi:isolate;color:var(--tx)}
 .counts{color:var(--mut2);font-size:12.5px;margin-inline-start:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.counts .sep{color:var(--mut2);opacity:.5}
 .tablewrap{overflow:auto;max-height:min(58vh,640px);min-width:0;-webkit-overflow-scrolling:touch}
 table{width:100%;border-collapse:separate;border-spacing:0;font-size:13.5px}
 thead th{position:sticky;top:0;z-index:2;background:#0f1a2c;color:var(--mut);font-weight:600;font-size:12.5px;
@@ -1640,6 +1641,34 @@ tbody tr:last-child td{border-bottom:0}
   .spdlegend{font-size:11px;gap:10px}
   .btn.wide{padding:11px 14px;font-size:13px;flex:1 1 100%}
   footer{padding:16px 12px 20px}
+
+  /* الجدول يتحوّل كروت على الموبايل */
+  .tablewrap{overflow:visible;max-height:none;padding:10px 10px 4px}
+  table{display:block}
+  thead{display:none}
+  tbody{display:block}
+  tbody tr{display:grid;grid-template-columns:1fr auto;
+    grid-template-areas:"dev state" "mac state" "act act";gap:5px 10px;
+    border:1px solid var(--line);border-radius:13px;padding:11px 12px;margin-bottom:9px;
+    background:linear-gradient(180deg,#121d31,#0f1828)}
+  tbody tr:hover{background:#141f33}
+  tbody tr.mine{background:linear-gradient(90deg,rgba(79,140,255,.13),#0f1828 75%)}
+  tbody tr.blocked{background:linear-gradient(90deg,rgba(255,93,110,.12),#0f1828 75%)}
+  tbody td{display:block;border:0;padding:0}
+  tbody td:nth-child(1){grid-area:dev}
+  tbody td:nth-child(3){grid-area:mac}
+  tbody td:nth-child(5){grid-area:state;align-self:center}
+  tbody td:nth-child(6){grid-area:act;margin-top:6px}
+  tbody td:nth-child(6) .btn{width:100%;justify-content:center;padding:9px 12px}
+  tbody td.hide-sm{display:none!important}
+  tbody td:nth-child(3) .mono{font-size:11.5px;color:var(--mut)}
+  .dev{min-width:0;gap:9px}
+  .dev .dic{width:30px;height:30px;font-size:15px;border-radius:9px}
+  .dev .dn{font-size:13px}
+  .dev .dv{display:none}
+  .empty,.skelrow{grid-template-areas:none!important;display:block!important}
+  .empty td,.skelrow td{display:block!important}
+  .counts .sep{display:none}
 }
 @media(max-width:430px){
   .grid-tiles{grid-template-columns:1fr}
@@ -2119,8 +2148,8 @@ function renderDevices(){
   });
   var oncount=rows.filter(function(d){return d.status==='Online'}).length;
   var cnt='<span class="state on"><span class="dot ok"></span>'+oncount+' متصل</span>'+
-    '<span>|</span> معروض '+rows.length+' من '+D.length;
-  if(mfE.length)cnt+='<span>|</span><span class="state blk">'+mfE.length+' محظور</span>';
+    '<span class="sep">|</span> معروض '+rows.length+' من '+D.length;
+  if(mfE.length)cnt+='<span class="sep">|</span><span class="state blk">'+mfE.length+' محظور</span>';
   $('#counts').innerHTML=cnt;
   if(!rows.length){
     var emsg=(ROUTER!==true)?'الراوتر مش متصل — بعد الدخول هتظهر الأجهزة هنا':'مفيش أجهزة مطابقة للفلتر الحالي';
