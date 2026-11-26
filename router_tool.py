@@ -1902,7 +1902,12 @@ var T='__TOKEN__';
 var $=function(s){return document.querySelector(s)};
 var api=async function(p,b){var r=await fetch(p,{method:b?'POST':'GET',cache:'no-store',
   headers:{'X-Token':T,'Content-Type':'application/json'},body:b?JSON.stringify(b):null});
-  if(r.status===403)throw new Error('token');return await r.json()};
+  if(r.status===403){
+    // التوكن بقى قديم (السيرفر اتعمله restart) → نعيد تحميل الصفحة مرة واحدة بس
+    if(!window.__rl){window.__rl=1;location.reload()}
+    throw new Error('token');
+  }
+  return await r.json()};
 var sleep=function(ms){return new Promise(function(r){setTimeout(r,ms)})};
 var esc=function(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){
   return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})};

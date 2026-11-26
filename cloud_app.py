@@ -31,7 +31,8 @@ SECRET = (AGENT_KEY + "|" + DASH_PASS + "|rd").encode()
 COOKIE = "rd_auth"
 
 ST = {
-    "token": secrets.token_urlsafe(18),
+    # توكن ثابت (مشتق من السر) عشان الـ restart ميكسرش صفحة مفتوحة
+    "token": hmac.new(SECRET, b"ui-token", hashlib.sha256).hexdigest()[:24],
     "snapshot": None, "snap_ts": 0.0,
     "speed": {"ok": False, "stale": True, "rx": 0, "tx": 0, "hist": []}, "speed_ts": 0.0,
     "events": [], "file": [],
