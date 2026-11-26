@@ -1678,8 +1678,8 @@ tbody tr:last-child td{border-bottom:0}
   .tile .v{font-size:13px}
   .tile .v.mono{font-size:11px}
   .tile .n{font-size:9.5px;line-height:1.4}
-  .spdgrid{grid-template-columns:1fr}
-  .spdbox.tot{grid-column:auto}
+  .spdgrid{grid-template-columns:repeat(2,1fr)}
+  .spdbox.tot{grid-column:1/-1}
 }
 </style>
 </head>
