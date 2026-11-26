@@ -1671,9 +1671,13 @@ tbody tr:last-child td{border-bottom:0}
   .counts .sep{display:none}
 }
 @media(max-width:430px){
-  .grid-tiles{grid-template-columns:1fr}
-  .tile{padding:11px 12px}
-  .tile .v{font-size:15px}
+  .grid-tiles{grid-template-columns:repeat(2,1fr)}
+  .tile{padding:10px 11px;gap:8px}
+  .tile .tico{width:29px;height:29px;border-radius:9px}
+  .tile .k{font-size:10.5px}
+  .tile .v{font-size:13px}
+  .tile .v.mono{font-size:11px}
+  .tile .n{font-size:9.5px;line-height:1.4}
   .spdgrid{grid-template-columns:1fr}
   .spdbox.tot{grid-column:auto}
 }
