@@ -29,6 +29,7 @@ STATUS = {"ts": 0.0, "data": None}
 STATUS_LK = threading.Lock()
 SENT_SEQ = [0]
 LAST_FILE = [0.0]
+_POLL = [0]
 
 
 def log(msg):
@@ -91,7 +92,9 @@ def events_tail():
     with rt.EVENT_LOCK:
         evs = list(rt.EVENTS[-250:])
         seq = rt.EVENT_SEQ[0]
-    if seq == SENT_SEQ[0]:
+    _POLL[0] += 1
+    # كل 25 دورة بنبعت القايمة كاملة تاني (لو السحابة اتعملت لها restart بترجع فاضية)
+    if seq == SENT_SEQ[0] and _POLL[0] % 25 != 0:
         return None
     SENT_SEQ[0] = seq
     return evs
