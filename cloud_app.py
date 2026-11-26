@@ -14,8 +14,9 @@
   DASH_PASS       — باسورد اللوحة (Basic auth). إجباري للرابط العام
   DASH_USER       — افتراضي admin
 """
-import base64, http.server, json, os, secrets, sys, threading, time
+import hashlib, hmac, http.server, json, os, secrets, sys, threading, time
 from datetime import datetime
+from urllib.parse import parse_qs
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -26,6 +27,8 @@ AGENT_KEY = (os.environ.get("AGENT_KEY") or "").strip()
 DASH_PASS = (os.environ.get("DASH_PASS") or "").strip()
 DASH_USER = (os.environ.get("DASH_USER") or "admin").strip()
 CMD_TIMEOUT = float(os.environ.get("CMD_TIMEOUT", "75"))
+SECRET = (AGENT_KEY + "|" + DASH_PASS + "|rd").encode()
+COOKIE = "rd_auth"
 
 ST = {
     "token": secrets.token_urlsafe(18),
@@ -102,6 +105,57 @@ def wait_result(cid, timeout=CMD_TIMEOUT):
         return ST["results"].pop(cid)
 
 
+LOGIN_HTML = r"""<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark">
+<title>دخول لوحة الراوتر</title>
+<style>
+:root{--bg:#070b12;--card:#101828;--line:#1e2b44;--line2:#2b3d5e;--tx:#e9eff9;--mut:#8395b5;--mut2:#5c6f90;
+--acc:#4f8cff;--bad:#ff5d6e;--ok:#22c97b}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:grid;place-items:center;padding:22px;color:var(--tx);
+background:radial-gradient(900px 420px at 80% -10%,rgba(79,140,255,.16),transparent 60%),
+           radial-gradient(700px 340px at 10% 0%,rgba(34,201,123,.07),transparent 58%),var(--bg);
+font:14px/1.6 "Segoe UI",Tahoma,Arial,sans-serif}
+.card{width:min(430px,96vw);background:linear-gradient(180deg,#101828,#0d1524);border:1px solid var(--line);
+border-radius:18px;padding:26px 24px;box-shadow:0 20px 60px rgba(0,0,0,.55)}
+.logo{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;margin:0 auto 14px;
+background:linear-gradient(145deg,#2f6ae0,#59a0ff);box-shadow:0 8px 22px rgba(47,106,224,.45)}
+h1{margin:0 0 4px;font-size:18px;text-align:center}
+p.sub{margin:0 0 18px;text-align:center;color:var(--mut2);font-size:12.5px}
+label{display:block;color:var(--mut);font-size:12.5px;margin-bottom:7px}
+input{width:100%;font:inherit;background:#0b1424;color:var(--tx);border:1px solid var(--line);
+border-radius:12px;padding:12px 14px;letter-spacing:1px}
+input:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px rgba(79,140,255,.18)}
+button{width:100%;font:inherit;font-weight:600;color:#fff;border:0;border-radius:12px;padding:12px;
+margin-top:14px;cursor:pointer;background:linear-gradient(180deg,#3a72d8,#2a5cc0);box-shadow:0 6px 18px rgba(47,106,224,.35)}
+button:hover{filter:brightness(1.08)}
+.err{background:#2a1220;border:1px solid #8a3a48;color:#ffb3bd;border-radius:11px;padding:10px 12px;
+font-size:12.5px;margin-bottom:14px}
+.note{margin-top:16px;padding-top:14px;border-top:1px solid var(--line);color:var(--mut2);font-size:12px;line-height:1.8}
+.note b{color:var(--mut)}
+.note code{font-family:Consolas,monospace;direction:ltr;unicode-bidi:isolate;color:#bcd6ff}
+</style></head><body>
+<div class="card">
+  <div class="logo"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9"
+      stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="13.5" width="19" height="7" rx="2.2"/>
+      <path d="M6.5 17h.01M10 17h.01"/><path d="M12 10V6.6"/><path d="M8.4 7.4a6 6 0 0 1 7.2 0"/>
+      <path d="M6.1 4.6a9.5 9.5 0 0 1 11.8 0"/></svg></div>
+  <h1>لوحة تحكم الراوتر</h1>
+  <p class="sub">ده باسورد اللوحة (حماية الموقع) — مش باسورد الراوتر</p>
+  __ERR__
+  <form method="POST" action="/login">
+    <label for="p">باسورد اللوحة</label>
+    <input id="p" name="pass" type="password" autocomplete="current-password" placeholder="••••••••••••" autofocus>
+    <button type="submit">دخول</button>
+  </form>
+  <div class="note">
+    <b>ملاحظة:</b> باسورد الراوتر (admin) بتكتبه <b>جوّه اللوحة</b> في صندوق «الدخول للراوتر» —
+    ومحفوظ بالفعل فمش هيتطلب منك.<br>
+    اسم المستخدم هنا ثابت: <code>admin</code>
+  </div>
+</div></body></html>"""
+
+
 class H(http.server.BaseHTTPRequestHandler):
     server_version = "RouterCloud"
 
@@ -126,14 +180,32 @@ class H(http.server.BaseHTTPRequestHandler):
             pass
 
     def _authed(self):
+        """جلسة اللوحة بكوكي موقّع (بدل نافذة Basic auth اللي بتلخبط)."""
         if not DASH_PASS:
             return True
-        want = "Basic " + base64.b64encode(("%s:%s" % (DASH_USER, DASH_PASS)).encode()).decode()
-        if self.headers.get("Authorization") == want:
-            return True
-        self._send(401, "مطلوب باسورد اللوحة", "text/plain; charset=utf-8",
-                   {"WWW-Authenticate": 'Basic realm="router"'})
+        sig = hmac.new(SECRET, b"admin", hashlib.sha256).hexdigest()[:40]
+        for part in (self.headers.get("Cookie") or "").split(";"):
+            if "=" in part:
+                k, v = part.split("=", 1)
+                if k.strip() == COOKIE and v.strip() == sig:
+                    return True
         return False
+
+    def _login_page(self, err=False):
+        html = LOGIN_HTML.replace("__ERR__", '<div class="err">الباسورد غلط. جرب تاني.</div>' if err else "")
+        self._send(200, html, "text/html; charset=utf-8")
+
+    def _do_login(self):
+        n = int(self.headers.get("Content-Length") or 0)
+        raw = self.rfile.read(n).decode("utf-8", "replace") if n else ""
+        pw = (parse_qs(raw).get("pass") or [""])[0]
+        if DASH_PASS and hmac.compare_digest(pw.strip(), DASH_PASS):
+            sig = hmac.new(SECRET, b"admin", hashlib.sha256).hexdigest()[:40]
+            self._send(303, "", "text/plain", {
+                "Location": "/",
+                "Set-Cookie": "%s=%s; Path=/; HttpOnly; Max-Age=2592000; SameSite=Lax" % (COOKIE, sig)})
+        else:
+            self._login_page(True)
 
     def _body(self):
         n = int(self.headers.get("Content-Length") or 0)
@@ -184,12 +256,14 @@ class H(http.server.BaseHTTPRequestHandler):
         p = self.path.split("?")[0]
         if p == "/healthz":
             return self._send(200, {"ok": True, "agent": agent_alive(), "v": VERSION})
+        if p == "/login":
+            return self._login_page()
         if p == "/agent/poll":
             if not self._agent_ok():
                 return self._send(403, {"ok": False, "error": "agent key"})
             return self._send(200, self._agent_poll())
         if not self._authed():
-            return
+            return self._send(303, "", "text/plain", {"Location": "/login"})
         if p in ("/", "/index.html"):
             return self._send(200, PAGE.replace("__TOKEN__", ST["token"]).replace("__VERSION__", VERSION),
                               "text/html; charset=utf-8")
@@ -215,6 +289,8 @@ class H(http.server.BaseHTTPRequestHandler):
 
     def do_POST(self):
         p = self.path.split("?")[0]
+        if p == "/login":
+            return self._do_login()
         if p == "/agent/poll":
             if not self._agent_ok():
                 return self._send(403, {"ok": False, "error": "agent key"})
@@ -224,7 +300,7 @@ class H(http.server.BaseHTTPRequestHandler):
                 return self._send(403, {"ok": False, "error": "agent key"})
             return self._send(200, self._agent_result())
         if not self._authed():
-            return
+            return self._send(303, "", "text/plain", {"Location": "/login"})
         if self.headers.get("X-Token") != ST["token"]:
             return self._send(403, {"ok": False, "error": "token"})
         if not p.startswith("/api/"):

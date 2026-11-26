@@ -379,33 +379,46 @@ def own_mac():
 
 
 ARP_RE = re.compile(r"((?:\d{1,3}\.){3}\d{1,3})\s+([0-9a-fA-F]{2}(?:[-:][0-9a-fA-F]{2}){5})")
+_NO_WIN = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+_ARP_CACHE = {"ts": 0.0, "value": []}
+_MAC_CACHE = {"ts": 0.0, "value": []}
 
 
 def arp_pairs():
-    """(IP, MAC) من جدول ARP بتاع النظام."""
+    """(IP, MAC) من جدول ARP بتاع النظام — متكاشة 60 ثانية ومن غير نافذة."""
+    now = time.time()
+    if _ARP_CACHE["ts"] and now - _ARP_CACHE["ts"] < 60:
+        return list(_ARP_CACHE["value"])
     out = []
     try:
         res = subprocess.run(["arp", "-a"], capture_output=True, text=True, timeout=8,
-                             encoding="utf-8", errors="replace")
+                             encoding="utf-8", errors="replace", creationflags=_NO_WIN)
         text = (res.stdout or "") + "\n" + (res.stderr or "")
     except Exception:
         return out
     for ip, mac in ARP_RE.findall(text):
         out.append((ip, mac.replace("-", ":").lower()))
+    _ARP_CACHE["ts"] = time.time()
+    _ARP_CACHE["value"] = out
     return out
 
 
 def local_mac_list():
-    """كل MACs كروت الشبكة على الجهاز (ويندوز: getmac)."""
+    """كل MACs كروت الشبكة على الجهاز (ويندوز: getmac). متكاشة + من غير نافذة."""
+    now = time.time()
+    if _MAC_CACHE["ts"] and now - _MAC_CACHE["ts"] < 60:
+        return set(_MAC_CACHE["value"])
     out = set()
     try:
         if os.name == "nt":
             res = subprocess.run(["getmac", "/fo", "csv", "/nh"], capture_output=True, text=True, timeout=8,
-                                 encoding="utf-8", errors="replace")
+                                 encoding="utf-8", errors="replace", creationflags=_NO_WIN)
             for m in re.findall(r"([0-9A-Fa-f]{2}(?:-[0-9A-Fa-f]{2}){5})", res.stdout or ""):
                 out.add(m.replace("-", ":").lower())
     except Exception:
         pass
+    _MAC_CACHE["ts"] = time.time()
+    _MAC_CACHE["value"] = sorted(out)
     return out
 
 
