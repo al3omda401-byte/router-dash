@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: router-dash
+    runtime: python
+    plan: free
+    region: frankfurt
+    healthCheckPath: /healthz
+    buildCommand: pip install -r requirements.txt
+    startCommand: python cloud_app.py
+    envVars:
+      - key: AGENT_KEY
+        sync: false
+      - key: DASH_PASS
+        sync: false
+      - key: DASH_USER
+        value: admin

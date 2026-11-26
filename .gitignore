@@ -1,0 +1,6 @@
+config.ini
+router_tool.log
+diagnostics.txt
+__pycache__/
+*.pyc
+.secret*
