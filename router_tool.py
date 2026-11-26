@@ -1418,7 +1418,9 @@ header{position:sticky;top:0;z-index:40;backdrop-filter:blur(14px);
 .icobtn.spinning .ic{animation:rot .9s linear infinite}
 
 /* ---------- layout ---------- */
-main{flex:1 0 auto;max-width:1180px;width:100%;margin:0 auto;padding:18px 18px 70px;display:grid;gap:16px;align-content:start}
+main{flex:1 0 auto;max-width:1180px;width:100%;margin:0 auto;padding:18px 18px 70px;display:grid;gap:16px;align-content:start;min-width:0}
+main>*{min-width:0}
+#view-home>*,#view-log>*{min-width:0}
 
 /* ---------- footer ---------- */
 footer{flex:none;border-top:1px solid var(--line);margin-top:14px;
@@ -1435,7 +1437,7 @@ footer .fbrand b{font-weight:700;font-size:13.5px;letter-spacing:.3px;
 footer .fver{font-family:var(--mono);font-size:11px;color:#41536f}
 @media(max-width:720px){footer .frule{display:none}}
 .card{background:linear-gradient(180deg,var(--card),#0e1625);border:1px solid var(--line);border-radius:var(--r);
-  box-shadow:var(--sh);animation:fadeup .28s ease both}
+  box-shadow:var(--sh);animation:fadeup .28s ease both;min-width:0}
 .card>.head{display:flex;gap:12px;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap}
 .card>.head h2{margin:0;font-size:15px;display:flex;gap:9px;align-items:center}
 .card>.head .sub{color:var(--mut2);font-size:12.5px}
@@ -1512,7 +1514,7 @@ footer .fver{font-family:var(--mono);font-size:11px;color:#41536f}
 .logindone .okp{color:var(--ok);font-weight:700;display:inline-flex;gap:7px;align-items:center}
 .umin{font-family:var(--mono);direction:ltr;unicode-bidi:isolate;color:var(--tx)}
 .counts{color:var(--mut2);font-size:12.5px;margin-inline-start:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.tablewrap{overflow:auto;max-height:min(58vh,640px)}
+.tablewrap{overflow:auto;max-height:min(58vh,640px);min-width:0;-webkit-overflow-scrolling:touch}
 table{width:100%;border-collapse:separate;border-spacing:0;font-size:13.5px}
 thead th{position:sticky;top:0;z-index:2;background:#0f1a2c;color:var(--mut);font-weight:600;font-size:12.5px;
   text-align:right;padding:11px 12px;border-bottom:1px solid var(--line)}
@@ -1593,12 +1595,58 @@ tbody tr:last-child td{border-bottom:0}
 .mbox .mact{display:flex;gap:10px;justify-content:flex-start;margin-top:18px;flex-wrap:wrap}
 .hidden{display:none!important}
 .center{display:grid;place-items:center;gap:10px;padding:40px 18px;color:var(--mut2);text-align:center}
-@media(max-width:720px){
+@media(max-width:760px){
   .hide-sm{display:none!important}
-  .brand{min-width:0}
-  .chips{width:100%}
-  main{padding:14px 12px 100px}
-  .card>.head,.card>.body,.tools,.chipsbar{padding-inline:14px}
+  body{overflow-x:hidden}
+  .hwrap{padding:9px 12px;gap:8px}
+  .brand{min-width:0;flex:1 1 160px}
+  .brand h1{font-size:15px}
+  .brand small{font-size:10.5px}
+  .logo{width:32px;height:32px;border-radius:10px}
+  .tabs{order:2;margin-inline-start:auto;padding:3px}
+  .tab{padding:6px 11px;font-size:12.5px}
+  .chips{order:3;width:100%;gap:6px;margin-inline-start:0}
+  .chip{padding:6px 10px;min-height:34px;font-size:12.5px;border-radius:10px}
+  .chip .v{font-size:12px}
+  .chip.spd{order:9}
+  .spdv{font-size:12.5px;min-width:38px}
+  .spdrow .ic{width:13px;height:13px}
+  .spdu{font-size:9.5px}
+  .spddiv{height:13px}
+  main{padding:12px 10px 54px;gap:12px}
+  .card>.head{padding:11px 13px;gap:7px}
+  .card>.head h2{font-size:14px}
+  .card>.body{padding:12px 13px}
+  .card>.head .sub{font-size:11.5px}
+  .grid-tiles{grid-template-columns:repeat(2,1fr);gap:9px}
+  .tile{padding:10px 11px;gap:9px;border-radius:12px}
+  .tile .tico{width:32px;height:32px;border-radius:10px}
+  .tile .tico .ic{width:16px;height:16px}
+  .tile .k{font-size:11px}
+  .tile .v{font-size:14.5px}
+  .tile .v.mono{font-size:12.5px}
+  .tile .n{font-size:10px}
+  .tools{padding:10px 13px;gap:8px}
+  .search{max-width:none}
+  .counts{width:100%;margin-inline-start:0;font-size:11.5px;gap:6px}
+  .logindone{font-size:12.5px;gap:7px}
+  #authacts{gap:6px;margin-inline-start:0;width:100%}
+  #authacts .btn{padding:6px 9px;font-size:11.5px;flex:1 1 auto}
+  .spdgrid{grid-template-columns:repeat(2,1fr);gap:9px;margin-bottom:11px}
+  .spdbox{padding:10px 11px}
+  .spdbox .k{font-size:11px}
+  .spdbox .big b{font-size:19px}
+  .spdbox.tot{grid-column:1/-1}
+  .spdlegend{font-size:11px;gap:10px}
+  .btn.wide{padding:11px 14px;font-size:13px;flex:1 1 100%}
+  footer{padding:16px 12px 20px}
+}
+@media(max-width:430px){
+  .grid-tiles{grid-template-columns:1fr}
+  .tile{padding:11px 12px}
+  .tile .v{font-size:15px}
+  .spdgrid{grid-template-columns:1fr}
+  .spdbox.tot{grid-column:auto}
 }
 </style>
 </head>
